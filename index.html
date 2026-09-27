@@ -332,14 +332,21 @@
 
         .chat-space {
             flex: 1;
-            padding: 1.25rem;
+            padding: 0;
             color: var(--text-muted);
             font-size: 0.875rem;
             display: flex;
-            align-items: center;
-            justify-content: center;
+            align-items: stretch;
+            justify-content: stretch;
             text-align: center;
-            overflow-y: auto; /* Permite scroll vertical interno si el texto es largo */
+            overflow: hidden;
+        }
+
+        .chat-space iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
         }
 
         /* =========================================
@@ -514,8 +521,12 @@
                 CHAT EN VIVO
             </div>
             <div class="chat-space">
-                <!-- Pon tu widget de chat encima de esta zona en OBS -->
-                Pon tu widget de chat<br>sobre esta área en OBS
+                <iframe
+                    src="https://streamlabs.com/widgets/chat-box/v1/8FA10361E0A1403642DCFC6370A2C70D4D90260BA07DA2A802795C1151B17C33EF04A121CFA0BCCA65315CF3E39A0CFEF997E94E1D2B0EB666A80F60211C31325BF9FD0181737F1ACB713CE3371D6C18385CA5DEDD029EEE9BCC33894D111A148795936E5F9B1B2DE6FC95D6643E2791C8EA2E1F27A89701875E8AF2AA"
+                    title="Chat en vivo"
+                    frameborder="0"
+                    allowtransparency="true">
+                </iframe>
             </div>
         </section>
 
