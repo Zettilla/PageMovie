@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zettilla_7 - Master Cinematic Overlay Responsivo v2</title>
+    <style>
+        /* --- FUENTES PRO --- */
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Rajdhani:wght@500;700&display=swap');
+
+        /* --- VARIABLES DE DISEÑO (Cambia colores aquí) --- */
+        :root {
+            --base-dark: #0F0F12; /* Casi Negro */
+            --kick-green: #53FC18; /* Verde Kick */
+            --neon-blue: #3B82F6; /* Azul Neón */
+            --neon-purple: #8B5CF6; /* Morado Neón */
+            --text-main: #FFFFFF;
+            --text-muted: #A0A0B0;
+            --border-opacity: rgba(255, 255, 255, 0.08);
+            
+            /* Animación de Ola */
+            --wave-speed: 8s;
+
+            /* Base font size para rems */
+            font-size: 16px;
+        }
+
+        /* --- RESET Y ESTRUCTURA BASE --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            /* Usamos ancho y alto del viewport completa */
+            width: 100vw; 
+            min-height: 100vh;
+            background: transparent; /* Importante para OBS */
+            background-color: var(--base-dark); /* Color base si hay huecos */
+            font-family: 'Rajdhani', sans-serif;
+            color: var(--text-main);
+            overflow-x: hidden; /* Evita scroll horizontal */
+            position: relative;
+            
+            /* Flexbox por defecto en diseño de escritorio */
+            display: flex;
+            flex-direction: row;
+        }
+
+        /* Malla Cibernética de Fondo sutil */
+        body::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image: 
+                linear-gradient(var(--border-opacity) 1px, transparent 1px),
+                linear-gradient(90deg, var(--border-opacity) 1px, transparent 1px);
+            background-size: 3rem 3rem;
+            z-index: 0;
+            mask-image: radial-gradient(circle at center, black 30%, transparent 80%);
+            pointer-events: none; /* No interfiere con clics */
+        }
+
+        /* =========================================
+           CONTENEDOR DE CONTENIDO (CINE)
+           ========================================= */
+        .content-zone {
+            flex: 1; /* Ocupa el espacio restante en escritorio */
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+            /* IMPORTANTE: Posición relativa para centrar los controles abajo */
+            position: relative; 
+            /* Padding relativo en porcentaje del viewport width */
+            padding: 2.5vw; 
+            padding-bottom: 7vw; /* Espacio extra abajo para no tapar el HUB en escritorio */
+        }
+
+        .cinema-viewport {
+            width: 100%;
+            height: 100%;
+            border-radius: 0.75rem; /* Unidades relativas */
+            position: relative;
+            
+            /* --- EL MARCO CINEMÁTICO ANIMADO --- */
+            border: 0.25rem solid transparent; /* Grosor relativo */
+            background: 
+                linear-gradient(transparent, transparent) padding-box, /* Centro Transparente */
+                linear-gradient(270deg, var(--neon-blue), var(--neon-purple), var(--neon-blue)) border-box;
+            background-size: 200% 200%;
+            background-clip: padding-box, border-box;
+            
+            animation: waveGradient var(--wave-speed) ease infinite;
+            
+            /* Resplandor exterior sutil */
+            box-shadow: 0 0 2rem rgba(59, 130, 246, 0.2);
+        }
+
+        /* Detalle HUD Esquinas */
+        .cinema-viewport::before, .cinema-viewport::after {
+            content: '';
+            position: absolute;
+            width: 2rem;
+            height: 2rem;
+            border: 0.25rem solid var(--text-main);
+            z-index: 2;
+            opacity: 0.5;
+        }
+        /* Top-Left */
+        .cinema-viewport::before { top: -0.25rem; left: -0.25rem; border-right: none; border-bottom: none; border-top-left-radius: 0.75rem; }
+        /* Bottom-Right */
+        .cinema-viewport::after { bottom: -0.25rem; right: -0.25rem; border-left: none; border-top: none; border-bottom-right-radius: 0.75rem; }
+
+        /* =========================================
+           NUEVO: CONTROL HUB CENTRADO EN EL JUEGO
+           ========================================= */
+        .bottom-control-hub {
+            position: absolute;
+            bottom: 0;
+            left: 50%; /* Centrado en su padre (.content-zone) */
+            transform: translateX(-50%);
+            width: 90%; /* Ancho sutilmente menor que el juego completo */
+            height: 6rem; /* Altura del HUB */
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem; /* Espacio entre botones y bulto */
+            pointer-events: none; /* Deja pasar clics excepto a hijos */
+        }
+
+        /* Botones Pro Adaptados para el Hub Inferior */
+        .pro-button-bottom {
+            pointer-events: auto; /* Reactiva clics */
+            width: 14rem; /* Ancho fijo para simetría */
+            height: 3.5rem;
+            background: rgba(15, 15, 18, 0.9);
+            border: 1px solid var(--border-opacity);
+            border-radius: 0.5rem;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: 0.1rem;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+        }
+
+        /* Acento Azul (Seguir) */
+        .pro-button-bottom.follow-btn {
+            border-color: rgba(59, 130, 246, 0.4);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        .pro-button-bottom.follow-btn:hover {
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 1rem rgba(59, 130, 246, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* Acento Morado (Suscribirse) */
+        .pro-button-bottom.sub-btn {
+            border-color: rgba(139, 92, 246, 0.4);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        .pro-button-bottom.sub-btn:hover {
+            border-color: var(--neon-purple);
+            box-shadow: 0 0 1rem rgba(139, 92, 246, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* Efecto Escáner */
+        .pro-button-bottom::before {
+            content: '';
+            position: absolute;
+            top: -100%;
+            left: -100%;
+            width: 300%;
+            height: 300%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+            transition: all 0.5s ease;
+        }
+        .pro-button-bottom:hover::before {
+            top: 100%;
+            left: 100%;
+        }
+
+        /* KICK FOOTER BULGE Cyberpunk (Mantenido y adaptado) */
+        .kick-bulge-element {
+            width: 12rem; /* Wider than logo */
+            height: 5rem; /* Rising bulge height */
+            background: var(--base-dark); /* Bulge background color */
+            
+            /* Bulge shape and border treatment matching cinematic-viewport */
+            border: 3px solid transparent;
+            border-radius: 2.5rem 2.5rem 0 0; /* Curved top corners */
+            
+            background: 
+                linear-gradient(var(--base-dark), var(--base-dark)) padding-box,
+                linear-gradient(270deg, var(--neon-blue), var(--neon-purple), var(--neon-blue)) border-box;
+            background-size: 200% 200%;
+            background-clip: padding-box, border-box;
+            
+            animation: waveGradient var(--wave-speed) ease infinite;
+            
+            /* Neon effect rising */
+            box-shadow: 0 -5px 25px rgba(59, 130, 246, 0.4);
+            
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-top: 0.5rem; /* Adjust logo position within bulge */
+            flex-shrink: 0;
+        }
+
+        .kick-logo-svg {
+            width: 3rem; 
+            height: 3rem;
+            fill: var(--kick-green);
+            filter: drop-shadow(0 0 0.5rem rgba(83, 252, 24, 0.5));
+            animation: logoPulse 2s infinite alternate;
+        }
+
+        /* =========================================
+           BARRA LATERAL DE INTERACCIÓN (MEJORADA)
+           ========================================= */
+        .sidebar-zone {
+            /* Ancho relativo en escritorio, aumentado a 26vw para asegurar que quepa el texto */
+            width: 26vw; 
+            min-width: 340px; /* Un poco más de min-width para legibilidad */
+            min-height: 100vh;
+            background: rgba(15, 15, 18, 0.85); /* Semi-transparente */
+            backdrop-filter: blur(0.625rem); /* Desenfoque de fondo PRO */
+            border-left: 1px solid var(--border-opacity);
+            display: flex;
+            flex-direction: column;
+            padding: 2.5rem; /* Separación de elementos internos */
+            z-index: 2;
+            padding-bottom: 2rem; /* Normalizado ya que el bulto está fuera */
+        }
+
+        /* --- SECCIÓN BRANDING (Solo Nombre ahora) --- */
+        .branding-section {
+            text-align: center; /* Center the solo streamer name */
+            align-items: center;
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1.25rem;
+            border-bottom: 1px solid var(--border-opacity);
+            flex-shrink: 0; /* Evita que colapse verticalmente */
+        }
+
+        .brand-text-wrapper {
+            display: inline-block;
+            max-width: 100%; /* Evita desbordamiento horizontal */
+        }
+
+        .streamer-name {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 400;
+            
+            /* --- SOLUCIÓN DEFINITIVA DE TEXTO CENTRADO --- */
+            /* Usamos clamp() para un rango seguro y profesional en 1080p */
+            /* Mínimo 2rem (32px), ideal calc(1.8rem+1vw), máximo 3.5rem (56px) */
+            font-size: clamp(2.3rem, calc(2.1rem + 1vw), 3.5rem); 
+            
+            /* Reducimos el espaciado para ahorrar mucho espacio horizontal */
+            letter-spacing: 0.06rem; 
+            
+            /* Propiedades nuevas para evitar que se corte y centrar */
+            display: block;
+            width: 100%;
+            flex-shrink: 0;
+            white-space: nowrap;         /* Evita saltos de línea */
+            
+            /* Estilo */
+            background: linear-gradient(135deg, #FFF 30%, var(--neon-blue) 70%, var(--neon-purple) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 1.25rem rgba(59, 130, 246, 0.3);
+            line-height: 1.1;
+            margin-bottom: 0.5rem; /* Space between name and tagline */
+        }
+
+        .tagline {
+            font-size: 1rem; /* Slightly larger tagline */
+            color: var(--text-muted);
+            letter-spacing: 0.25rem; /* Distinct extra space */
+            text-transform: uppercase;
+        }
+
+        /* --- SECCIÓN CHAT (EXPANDIDA AUTOMÁTICAMENTE) --- */
+        .chat-section {
+            flex: 1; /* Ocupa TODO el espacio vertical restante */
+            width: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-opacity);
+            border-radius: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-height: 0; /* Importante para flex-grow vertical */
+        }
+
+        .chat-header {
+            height: 3rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid var(--border-opacity);
+            display: flex;
+            align-items: center;
+            padding: 0 1.25rem;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.8rem;
+            letter-spacing: 0.1rem;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .live-dot {
+            width: 0.5rem;
+            height: 0.5rem;
+            background-color: var(--kick-green);
+            border-radius: 50%;
+            margin-right: 0.6rem;
+            box-shadow: 0 0 0.5rem var(--kick-green);
+        }
+
+        .chat-space {
+            flex: 1;
+            padding: 1.25rem;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            overflow-y: auto; /* Permite scroll vertical interno si el texto es largo */
+        }
+
+        /* =========================================
+           MEDIA QUERIES - RESPONSIVIDAD MÓVIL
+           ========================================= */
+        
+        @media (max-width: 1280px) {
+            .branding-section { text-align: center; gap: 0.5rem; }
+            /* Sidebar wider holds on tablet */
+            .sidebar-zone { width: 30vw; padding: 1.5rem; } 
+            .bottom-control-hub { width: 95%; gap: 1rem; }
+            .kick-bulge-element { width: 10rem; height: 4rem; }
+            .pro-button-bottom { width: 11rem; height: 3rem; font-size: 0.9rem; }
+        }
+
+        /* --- MÓVILES EN VERTICAL (Stacking vertical) --- */
+        @media (max-width: 767px) {
+            body {
+                flex-direction: column; /* Diseño en columna vertical */
+                overflow-y: auto; /* Permite scroll en toda la página */
+            }
+
+            .content-zone {
+                flex: 0 0 auto;
+                width: 100%;
+                height: auto;
+                padding: 1rem;
+                padding-top: 1.5rem;
+                padding-bottom: 0; /* Extra padding no needed in stack */
+            }
+
+            .cinema-viewport {
+                height: auto;
+                aspect-ratio: 16 / 9;
+                border-width: 0.2rem;
+                border-radius: 0.5rem;
+            }
+            .cinema-viewport::before, .cinema-viewport::after {
+                width: 1.2rem; height: 1.2rem; border-width: 0.2rem;
+            }
+
+            .sidebar-zone {
+                width: 100%; 
+                min-width: 100%;
+                min-height: auto;
+                border-left: none;
+                border-top: 1px solid var(--border-opacity);
+                padding: 1.5rem;
+                flex: 0 0 auto;
+            }
+
+            .branding-section {
+                text-align: center; 
+                margin-bottom: 1.5rem;
+                padding-bottom: 1rem;
+            }
+            .streamer-name { font-size: 2rem; }
+            .tagline { font-size: 0.75rem; letter-spacing: 0.15rem; }
+
+            .chat-section {
+                min-height: 15rem;
+                max-height: 25rem;
+            }
+
+            /* Hub Inferior en Móvil Vertical (Debajo del chat) */
+            .bottom-control-hub { 
+                position: relative; 
+                width: 100%; 
+                left: 0; transform: translateX(0); 
+                height: auto;
+                flex-direction: column; /* Stacking vertical */
+                gap: 1rem;
+                border-radius: 0;
+                box-shadow: none;
+                background: transparent;
+                border: none;
+                margin-top: 1.5rem;
+                padding-bottom: 1rem;
+                pointer-events: auto;
+            }
+
+            /* Botones vuelven a formato fila en móvil para caber */
+            .mobile-buttons-row {
+                display: flex;
+                width: 100%;
+                gap: 1rem;
+                justify-content: center;
+            }
+
+            .pro-button-bottom { 
+                width: 45%; /* Dos botones lado a lado */
+                height: 3rem; 
+                font-size: 0.9rem; 
+                margin: 0;
+            }
+
+            .kick-bulge-element { 
+                width: 100%; 
+                height: 4rem; 
+                order: 3; /* Logo al final del scroll */
+                border-radius: 1rem 1rem 0 0;
+                margin-top: 1rem;
+            }
+            .kick-logo-svg { width: 2.5rem; height: 2.5rem; }
+        }
+
+        /* =========================================
+           ANIMACIONES
+           ========================================= */
+        @keyframes waveGradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes logoPulse {
+            0% { filter: drop-shadow(0 0 0.3rem rgba(83, 252, 24, 0.3)); }
+            100% { filter: drop-shadow(0 0 0.8rem rgba(83, 252, 24, 0.6)); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Zona Principal de Contenido (Diseño Tipo Cine, ahora con Controles abajo) -->
+    <main class="content-zone">
+        <div class="cinema-viewport">
+            <!-- AQUÍ VA TU JUEGO/CÁMARA DEBAJO EN OBS (Se mantiene cinemático) -->
+        </div>
+
+        <!-- NEW MOVED: HUB DE CONTROL INFERIOR (Centrado en el Juego) -->
+        <div class="bottom-control-hub">
+            
+            <!-- Seguir (Izquierda) -->
+            <button class="pro-button-bottom follow-btn">
+                <span>SEGUIR</span>
+            </button>
+
+            <!-- Kick Bulge Element (Centro) -->
+            <div class="kick-bulge-element">
+                <!-- SVG Simulado del logo 'K' de Kick -->
+                <svg class="kick-logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20,10 L45,10 L45,40 L65,10 L95,10 L70,50 L95,90 L65,90 L45,60 L45,90 L20,90 Z" />
+                </svg>
+            </div>
+
+            <!-- Suscribirse (Derecha) -->
+            <button class="pro-button-bottom sub-btn">
+                <span>SUSCRIBIRSE</span>
+            </button>
+
+            <!-- Contenedor auxiliar para móvil (CSS gestiona su visualización) -->
+            <div class="mobile-buttons-row" style="display: none;"></div> 
+        </div>
+    </main>
+
+    <!-- Barra Lateral de Interacción (MEJORADA: Más Ancha) -->
+    <aside class="sidebar-zone">
+        
+        <!-- Branding Zettilla_7 (Centrado y Claro, logo removed from here) -->
+        <section class="branding-section">
+            <div class="brand-text-wrapper">
+                <h1 class="streamer-name">ZETTILLA7</h1>
+                <p class="tagline">KICK STREAMER</p>
+            </div>
+        </section>
+
+        <!-- Chat Space (EXPANDIDO verticalmente para llenar el sidebar) -->
+        <section class="chat-section">
+            <div class="chat-header">
+                <div class="live-dot"></div>
+                CHAT EN VIVO
+            </div>
+            <div class="chat-space">
+                <!-- Pon tu widget de chat encima de esta zona en OBS -->
+                Pon tu widget de chat<br>sobre esta área en OBS
+            </div>
+        </section>
+
+    </aside>
+
+    <!-- JS Auxiliar para mover botones en móvil (Opcional, se puede hacer puro CSS pero esto es más limpio) -->
+    <script>
+        function adjustLayoutForMobile() {
+            const hub = document.querySelector('.bottom-control-hub');
+            const mobileRow = document.querySelector('.mobile-buttons-row');
+            const followBtn = document.querySelector('.follow-btn');
+            const subBtn = document.querySelector('.sub-btn');
+            const isMobile = window.innerWidth <= 767;
+
+            if (isMobile && followBtn && subBtn && mobileRow.children.length === 0) {
+                // Mueve botones dentro de la fila auxiliar para móvil
+                mobileRow.style.display = 'flex';
+                mobileRow.appendChild(followBtn);
+                mobileRow.appendChild(subBtn);
+                hub.prepend(mobileRow); // Pone la fila de botones arriba del logo en el stack vertical
+            } else if (!isMobile && mobileRow.children.length > 0) {
+                // Restaura botones a su posición original en escritorio
+                mobileRow.style.display = 'none';
+                hub.insertBefore(followBtn, hub.querySelector('.kick-bulge-element'));
+                hub.appendChild(subBtn);
+            }
+        }
+
+        // Ejecuta al cargar y al cambiar tamaño
+        window.addEventListener('load', adjustLayoutForMobile);
+        window.addEventListener('resize', adjustLayoutForMobile);
+    </script>
+
+</body>
+</html>
