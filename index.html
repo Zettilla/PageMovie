@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zettilla_7 - Master Cinematic Overlay Responsivo v2</title>
@@ -473,11 +474,17 @@
 
     <!-- Zona Principal de Contenido (Diseño Tipo Cine, ahora con Controles abajo) -->
     <main class="content-zone">
-        <div class="cinema-viewport">
-            <video id="screen-video" autoplay playsinline style="width: 100%; height: 100%; object-fit: contain;"></video>
-            <button id="btn-capture" style="position: absolute; top: 1rem; left: 1rem; z-index: 20; padding: 0.5rem 1rem; background: var(--kick-green); color: black; font-weight: bold; border: none; border-radius: 4px; cursor: pointer;">
-                VINCULAR CRUNCHYROLL
+        <div class="cinema-viewport" style="background-color: #000; display: flex; align-items: center; justify-content: center;">
+            <!-- Texto que ven los espectadores antes de que transmitas -->
+            <span id="stream-status" style="position: absolute; font-family: 'Orbitron', sans-serif; font-size: 1.1rem; letter-spacing: 0.1rem; color: var(--text-muted); z-index: 5; pointer-events: none;">ESPERANDO TRANSMISIÓN...</span>
+            
+            <!-- Botón exclusivo para ti (solo se muestra si entras con ?host=1) -->
+            <button id="btn-start-stream" type="button" style="display: none; position: absolute; top: 1.5rem; left: 1.5rem; z-index: 20; background: var(--kick-green); color: #000; font-family: 'Orbitron', sans-serif; font-weight: 800; font-size: 0.9rem; border: none; padding: 0.8rem 1.4rem; border-radius: 0.4rem; cursor: pointer;">
+                INICIAR PANTALLA COMPARTIDA
             </button>
+
+            <!-- Reproductor final -->
+            <video id="player" autoplay playsinline controls style="width: 100%; height: 100%; object-fit: contain; z-index: 10;"></video>
         </div>
 
         <!-- NEW MOVED: HUB DE CONTROL INFERIOR (Centrado en el Juego) -->
@@ -568,27 +575,93 @@
         window.addEventListener('load', adjustLayoutForMobile);
         window.addEventListener('resize', adjustLayoutForMobile);
 
-        const btnCapture = document.getElementById('btn-capture');
-        const videoElement = document.getElementById('screen-video');
+        // --- LÓGICA DE TRANSMISIÓN HOST / ESPECTADOR ---
+        const STREAM_ROOM_ID = 'zettilla-live-room-crunchy-777'; // ID único de tu sala
+        
+        const videoElement = document.getElementById('player');
+        const statusText = document.getElementById('stream-status');
+        const btnStart = document.getElementById('btn-start-stream');
 
-        btnCapture.addEventListener('click', async () => {
-            try {
-                const stream = await navigator.mediaDevices.getDisplayMedia({
-                    video: { cursor: "never" },
-                    audio: true
+        // Comprueba si eres tú quien entra a emitir
+        const isHost = new URLSearchParams(window.location.search).has('host');
+
+        if (isHost) {
+            // MODO TRANSMISOR (TÚ)
+            btnStart.style.display = 'block';
+            statusText.innerText = 'MODO TRANSMISOR ACTIVO. CLIC EN EL BOTÓN PARA EMITIR';
+            
+            const hostPeer = new Peer(STREAM_ROOM_ID);
+            let localStream = null;
+            const connectedViewers = new Set();
+
+            btnStart.addEventListener('click', async () => {
+                try {
+                    localStream = await navigator.mediaDevices.getDisplayMedia({
+                        video: { frameRate: { ideal: 60 } },
+                        audio: true
+                    });
+
+                    videoElement.srcObject = localStream;
+                    videoElement.muted = true; // Silenciado para ti para evitar eco
+                    statusText.style.display = 'none';
+                    btnStart.innerText = 'TRANSMITIENDO EN VIVO 🔴';
+                    btnStart.style.background = '#ff4444';
+                    btnStart.style.color = '#fff';
+
+                    localStream.getVideoTracks()[0].onended = () => {
+                        location.reload();
+                    };
+
+                    // Envía la señal a los espectadores que ya estén en la sala
+                    connectedViewers.forEach(viewerId => {
+                        hostPeer.call(viewerId, localStream);
+                    });
+
+                } catch (err) {
+                    console.error("Error al capturar pantalla:", err);
+                }
+            });
+
+            // Cada vez que un espectador entra a la página, se le envía el video
+            hostPeer.on('connection', (conn) => {
+                connectedViewers.add(conn.peer);
+                if (localStream) {
+                    hostPeer.call(conn.peer, localStream);
+                }
+                conn.on('close', () => connectedViewers.delete(conn.peer));
+            });
+
+        } else {
+            // MODO ESPECTADOR (TUS SEGUIDORES)
+            btnStart.style.display = 'none';
+            const viewerPeer = new Peer();
+
+            viewerPeer.on('open', () => {
+                viewerPeer.connect(STREAM_ROOM_ID);
+
+                viewerPeer.on('call', (call) => {
+                    call.answer();
+                    call.on('stream', (remoteStream) => {
+                        statusText.style.display = 'none';
+                        videoElement.srcObject = remoteStream;
+                        videoElement.play().catch(() => {
+                            videoElement.muted = true;
+                            videoElement.play();
+                            statusText.style.display = 'block';
+                            statusText.innerText = 'TOCA EL REPRODUCTOR PARA ACTIVAR AUDIO';
+                            videoElement.onclick = () => {
+                                videoElement.muted = false;
+                                statusText.style.display = 'none';
+                            };
+                        });
+                    });
                 });
-                
-                videoElement.srcObject = stream;
-                btnCapture.style.display = 'none'; // Oculta el botón al conectar
+            });
 
-                // Si detienes la compartición, vuelve a mostrar el botón
-                stream.getVideoTracks()[0].onended = () => {
-                    btnCapture.style.display = 'block';
-                };
-            } catch (err) {
-                console.error("Error al capturar la pestaña:", err);
-            }
-        });
+            viewerPeer.on('error', () => {
+                statusText.innerText = 'EL STREAMER NO ESTÁ TRANSMITIENDO AHORA';
+            });
+        }
     </script>
 
 </body>
